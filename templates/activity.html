@@ -52,7 +52,7 @@ function logAction(actionType, resource) {
 function spamApi() {
     document.getElementById("msg").innerText = "Spamming API...";
     for (let i = 0; i < 12; i++) {
-        logAction("API_CALL", "/api/data");
+        logAction("API_CALL", "/api/data"); //demo resource access
     }
 }
 </script>
