@@ -20,7 +20,7 @@ SentinelX is a SOC-style web application that detects suspicious login behavior 
 - Frontend: HTML, CSS, Bootstrap, JavaScript
 
 ---
-
+by angshul arkarup.
 
 
 
