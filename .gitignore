@@ -33,4 +33,8 @@ node_modules/
 # Cache
 .cache/
 
-/notes.txt
+#personal notes
+/notes.txt 
+
+# Exclude original (non-optimized) phishing training artifacts
+ml_models/phishing_model.pkl

@@ -5,6 +5,7 @@ from routes.event_routes import event_bp
 from routes.auth_routes import auth_bp
 
 from routes.admin_routes import admin_bp
+from routes.phishing_routes import phishing_bp
 
 from flask import render_template
 from flask import session
@@ -22,6 +23,7 @@ app.register_blueprint(event_bp, url_prefix="/api")
 app.register_blueprint(auth_bp, url_prefix="/api")
 
 app.register_blueprint(admin_bp, url_prefix="/api/admin")
+app.register_blueprint(phishing_bp, url_prefix="/api")
 
 
 @app.route("/")
@@ -55,6 +57,13 @@ def activity_page():
     if "user_id" not in session:
         return redirect("/login")
     return render_template("activity.html", user_id=session["user_id"])
+
+
+@app.route("/url-scan")
+def url_scan_page():
+    if "user_id" not in session:
+        return redirect("/login")
+    return render_template("url_scan.html")
 
 
 @app.route("/admin/user-profile/<int:user_id>")
