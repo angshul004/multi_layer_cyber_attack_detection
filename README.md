@@ -42,7 +42,7 @@ multi_layer_cyber_attack_detection/
 ## Setup
 1. Clone repository:
 ```bash
-git clone <your-repo-url>
+git clone <repo-url>
 cd multi_layer_cyber_attack_detection
 ```
 
@@ -88,13 +88,21 @@ python ml_models/train_phishing_model_optimized.py
 Output model:
 - `ml_models/phishing_model_optimized.pkl`
 
+My model's accuracy:
+```bash
+Test Accuracy: 0.8913
+Test Precision (PHISHING): 0.9459
+Test Recall (PHISHING): 0.6556
+Test F1 (PHISHING): 0.7744
+Confusion matrix:
+[[77412  1173]
+ [10775 20510]]
+```
+
 ## Run Application
 ```bash
 python app.py
 ```
-
-Default local URL:
-- `http://127.0.0.1:5000/`
 
 ## Main Routes
 Page routes:
@@ -103,7 +111,7 @@ Page routes:
 - `/login` Login page
 - `/dashboard` User dashboard
 - `/activity` Activity simulation page
-- `/url-scan` URL phishing scan page (login required)
+- `/url-scan` URL phishing scan page 
 - `/admin/dashboard` Admin dashboard
 
 API routes:
@@ -111,7 +119,7 @@ API routes:
 - `POST /api/login`
 - `POST /api/log-action`
 - `POST /api/log-event`
-- `POST /api/scan-url` (login required)
+- `POST /api/scan-url` 
 - `GET /api/admin/alerts`
 - `GET /api/admin/users`
 
@@ -138,12 +146,7 @@ Response shape:
 }
 ```
 
-## Notes
-- `services/phishing_detector.py` is currently set to use:
-  - `ml_models/phishing_model_optimized.pkl`
-- Original large model/training script are excluded in `.gitignore`:
-  - `ml_models/train_phishing_model.py`
-  - `ml_models/phishing_model.pkl`
-
 ## Author
-Angshul Arkarup
+Angshul 
+## Contribution
+Arkarup
