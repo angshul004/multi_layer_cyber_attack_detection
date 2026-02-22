@@ -1,27 +1,31 @@
-from flask import Flask, jsonify
+﻿from __future__ import annotations
+
+import os
+
+from dotenv import load_dotenv
+from flask import Flask, redirect, render_template, session
+
 from config import Config
 from extensions import db
-from routes.event_routes import event_bp
-from routes.auth_routes import auth_bp
-
 from routes.admin_routes import admin_bp
+from routes.auth_routes import auth_bp
+from routes.event_routes import event_bp
 from routes.phishing_routes import phishing_bp
 
-from flask import render_template
-from flask import session
-
-from flask import redirect, url_for, session
-
+load_dotenv()
 
 app = Flask(__name__)
 app.config.from_object(Config)
-app.secret_key = "supersecretkey"  #demo
+
+secret_key = os.getenv("SECRET_KEY")
+if not secret_key:
+    raise RuntimeError("SECRET_KEY is not set. Add it to your .env file.")
+app.secret_key = secret_key
 
 db.init_app(app)
 
 app.register_blueprint(event_bp, url_prefix="/api")
 app.register_blueprint(auth_bp, url_prefix="/api")
-
 app.register_blueprint(admin_bp, url_prefix="/api/admin")
 app.register_blueprint(phishing_bp, url_prefix="/api")
 
@@ -30,9 +34,11 @@ app.register_blueprint(phishing_bp, url_prefix="/api")
 def home():
     return render_template("home.html")
 
+
 @app.route("/register")
 def register_page():
     return render_template("register.html")
+
 
 @app.route("/admin/dashboard")
 def admin_dashboard():
@@ -51,6 +57,7 @@ def user_dashboard():
 @app.route("/login")
 def login_page():
     return render_template("login.html")
+
 
 @app.route("/activity")
 def activity_page():
@@ -71,6 +78,7 @@ def user_profile(user_id):
     if "user_id" not in session or not session.get("is_admin"):
         return redirect("/login")
     return render_template("user_profile.html", user_id=user_id)
+
 
 @app.route("/logout")
 def logout():
