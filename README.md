@@ -69,7 +69,7 @@ DB_HOST=localhost
 DB_NAME=cyber_security_db
 ```
 
-5. Create database (if not already created):
+5. Create database in mysql (if not already created):
 ```sql
 CREATE DATABASE cyber_security_db;
 ```
@@ -156,6 +156,29 @@ Response shape:
   "features": {}
 }
 ```
+
+## Risk Scoring
+Risk score is stored per user in `risk_scores.score` and updated by backend services.
+
+### Current calculation rules
+- `FAILED_LOGIN` -> `+10`
+- `SECURITY_ALERT` (after repeated failed logins) -> `+30`
+- Behavior anomaly detected (more than 10 actions in the last 1 minute) -> `+20`
+
+### Event types involved
+- `FAILED_LOGIN`
+- `SUCCESSFUL_LOGIN` (logged, but does not increase score)
+- `SECURITY_ALERT` (logged during brute-force detection flow)
+- `API_CALL` and `PAGE_ACCESS` (counted for behavior-anomaly checks)
+- `URL_SCAN` (logged only; currently does not change risk score)
+
+### Notes
+- Behavior anomaly currently excludes these event types from action count:
+  - `SUCCESSFUL_LOGIN`
+  - `FAILED_LOGIN`
+  - `SECURITY_ALERT`
+  - `URL_SCAN`
+- URL scanning endpoint records events in `event_logs` but does not update risk score.
 
 ## Author
 Angshul Arkarup
