@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Admin Dashboard</title>
+    <title>Admin Dashboard | SentinelX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
 
 {% include "navbar.html" %}
 
-<div class="container mt-4">
+<main class="container py-4">
+    <h1 class="section-title mb-4">Admin Security Dashboard</h1>
 
-    <h2 class="text-center mb-4">Admin Security Dashboard</h2>
-
-    <!-- USERS -->
-    <div class="card shadow mb-4">
-        <div class="card-header bg-dark text-white">Users</div>
-        <div class="card-body">
-            <table class="table table-striped table-bordered" id="usersTable">
-                <thead class="table-dark">
+    <section class="panel p-3 mb-4">
+        <h5 class="section-title mb-3">Users</h5>
+        <div class="table-responsive">
+            <table class="table table-dark-custom align-middle" id="usersTable">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Username</th>
@@ -28,22 +31,18 @@
                 <tbody></tbody>
             </table>
         </div>
-    </div>
+    </section>
 
-    <!-- ALERT CHART -->
-    <div class="card shadow mb-4">
-        <div class="card-header bg-warning">Alert Severity Overview</div>
-        <div class="card-body">
-            <canvas id="severityChart"></canvas>
-        </div>
-    </div>
+    <section class="panel p-3 mb-4">
+        <h5 class="section-title mb-3">Alert Severity Overview</h5>
+        <canvas id="severityChart" height="90"></canvas>
+    </section>
 
-    <!-- ALERTS -->
-    <div class="card shadow">
-        <div class="card-header bg-danger text-white">Security Alerts</div>
-        <div class="card-body">
-            <table class="table table-bordered table-striped" id="alertsTable">
-                <thead class="table-dark">
+    <section class="panel p-3">
+        <h5 class="section-title mb-3">Security Alerts</h5>
+        <div class="table-responsive">
+            <table class="table table-dark-custom align-middle" id="alertsTable">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>User</th>
@@ -56,56 +55,92 @@
                 <tbody></tbody>
             </table>
         </div>
-    </div>
-
-</div>
+    </section>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 fetch("/api/admin/users")
-.then(r=>r.json())
-.then(users=>{
-    const tbody=document.querySelector("#usersTable tbody");
-    users.forEach(u=>{
-        const row=document.createElement("tr");
-        row.innerHTML=`
+.then(r => r.json())
+.then(users => {
+    const tbody = document.querySelector("#usersTable tbody");
+    users.forEach(u => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
             <td>${u.id}</td>
             <td>${u.username}</td>
             <td>${u.email}</td>
-            <td><a href="/admin/user-profile/${u.id}" class="btn btn-sm btn-primary">View</a></td>
+            <td><a href="/admin/user-profile/${u.id}" class="btn btn-sm btn-primary-custom">View</a></td>
         `;
         tbody.appendChild(row);
     });
 });
 
 fetch("/api/admin/alerts")
-.then(r=>r.json())
-.then(data=>{
-    let low=0,medium=0,high=0;
-    const tbody=document.querySelector("#alertsTable tbody");
+.then(r => r.json())
+.then(data => {
+    let low = 0, medium = 0, high = 0;
+    const tbody = document.querySelector("#alertsTable tbody");
 
-    data.forEach(a=>{
-        if(a.severity==="LOW") low++;
-        else if(a.severity==="MEDIUM") medium++;
+    data.forEach(a => {
+        if (a.severity === "LOW") low++;
+        else if (a.severity === "MEDIUM") medium++;
         else high++;
 
-        const row=document.createElement("tr");
-        row.innerHTML=`
+        const severityClass = a.severity === "LOW" ? "severity-low"
+            : a.severity === "MEDIUM" ? "severity-medium" : "severity-high";
+
+        const row = document.createElement("tr");
+        const dt = new Date(`${a.created_at}Z`);
+        dt.setMinutes(dt.getMinutes() + 330);
+        row.innerHTML = `
             <td>${a.id}</td>
             <td>${a.user_id}</td>
-            <td class="${a.severity}">${a.severity}</td>
+            <td class="${severityClass}">${a.severity}</td>
             <td>${a.message}</td>
             <td>${a.risk_score}</td>
-            <td>${new Date(a.created_at + "Z").toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})}</td>
+            <td>${dt.toLocaleString("en-IN", {
+                timeZone: "UTC",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+                hour: "numeric",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true
+            })}</td>
         `;
         tbody.appendChild(row);
     });
 
-    new Chart(document.getElementById("severityChart"),{
-        type:"bar",
-        data:{
-            labels:["LOW","MEDIUM","HIGH"],
-            datasets:[{label:"Alerts",data:[low,medium,high]}]
+    new Chart(document.getElementById("severityChart"), {
+        type: "bar",
+        data: {
+            labels: ["LOW", "MEDIUM", "HIGH"],
+            datasets: [{
+                label: "Alert count",
+                data: [low, medium, high],
+                backgroundColor: ["#ffd34f", "#ff9f45", "#ff5a5f"],
+                borderRadius: 8
+            }]
+        },
+        options: {
+            plugins: {
+                legend: { labels: { color: "#d5daee" } }
+            },
+            scales: {
+                x: { ticks: { color: "#d5daee" }, grid: { color: "#2f3550" } },
+                y: {
+                    beginAtZero: true,
+                    ticks: { color: "#d5daee" },
+                    grid: { color: "#2f3550" },
+                    title: {
+                        display: true,
+                        text: "number of alerts",
+                        color: "#d5daee"
+                    }
+                }
+            }
         }
     });
 });

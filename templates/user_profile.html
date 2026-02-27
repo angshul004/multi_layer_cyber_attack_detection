@@ -1,81 +1,193 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Profile</title>
+    <title>User Profile | SentinelX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
 </head>
-<body class="bg-light" data-user-id="{{ user_id }}">
-
+<body data-user-id="{{ user_id }}">
 
 {% include "navbar.html" %}
 
-<div class="container mt-4">
+<main class="container py-4">
+    <section class="panel p-4 mb-4">
+        <h1 id="userNameLine" class="section-title mb-2"></h1>
+        <p id="userEmailLine" class="muted mb-2"></p>
+        <div class="d-flex align-items-center gap-2">
+            <h5 id="riskScore" class="m-0"></h5>
+            <button
+              class="risk-tip"
+              data-bs-toggle="tooltip"
+              data-bs-placement="right"
+              title="Risk Score Calculation: FAILED_LOGIN = +10, BRUTEFORCE_DETECTED = +30, BEHAVIOR_ANOMALY = +20. URL scan currently does not change risk score.">
+              i
+            </button>
+        </div>
+    </section>
 
-<div class="card shadow mb-4">
-    <div class="card-body">
-        <h3 id="userInfo"></h3>
-        <h4 id="riskScore" class="text-danger"></h4>
-    </div>
-</div>
-
-<div class="card shadow mb-4">
-    <div class="card-header bg-danger text-white">Recent Alerts</div>
-    <div class="card-body">
-        <ul id="alerts" class="list-group"></ul>
-    </div>
-</div>
-
-<div class="card shadow mb-4">
-    <div class="card-header bg-primary text-white">Recent Activity</div>
-    <div class="card-body">
+    <section class="panel p-4 mb-4">
+        <h4 class="section-title mb-3">Recent Activity</h4>
         <ul id="events" class="list-group"></ul>
-    </div>
-</div>
+    </section>
 
-<div class="card shadow">
-    <div class="card-header bg-warning">Attack Timeline</div>
-    <div class="card-body">
-        <ul id="timeline" class="list-group"></ul>
-    </div>
-</div>
+    <section class="panel p-4 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="section-title m-0">Attack Timeline</h4>
+            <div class="d-flex gap-2">
+                <button id="timelinePrev" class="btn btn-ghost" type="button">&#9664;</button>
+                <button id="timelineNext" class="btn btn-ghost" type="button">&#9654;</button>
+            </div>
+        </div>
+        <div id="timelineEmpty" class="muted d-none">No attacks detected</div>
+        <div class="timeline-shell">
+            <div id="timelineTrack" class="timeline-track"></div>
+        </div>
+    </section>
 
-</div>
+    <button id="resetBtn" class="btn btn-danger">Clear alerts and reset risk score</button>
+</main>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="{{ url_for('static', filename='js/ui.js') }}"></script>
 <script>
 const userId = document.body.dataset.userId;
+const timelineTrack = document.getElementById("timelineTrack");
+const timelineShell = document.querySelector(".timeline-shell");
+const timelineEmpty = document.getElementById("timelineEmpty");
+const btnPrev = document.getElementById("timelinePrev");
+const btnNext = document.getElementById("timelineNext");
+const resetBtn = document.getElementById("resetBtn");
+
+let timelineItems = [];
+const SCROLL_STEP = 220;
+
+function formatActivityText(event) {
+    if (event.event_type === "SUCCESSFUL_LOGIN") return "SUCCESSFUL LOGIN";
+    if (event.event_type === "FAILED_LOGIN") return "FAILED LOGIN";
+    if (event.event_type === "API_CALL") return `API CALL -> ${event.resource || "/api/data"}`;
+    if (event.event_type === "URL_SCAN") return `URL SCAN -> ${event.url || "N/A"}`;
+    return `${event.event_type}${event.resource ? " -> " + event.resource : ""}`;
+}
+
+function timelineMeta(event) {
+    if (event.event_type === "FAILED_LOGIN") return { icon: "x", label: "wrong password", color: "#ff6b6b" };
+    if (event.event_type === "SUCCESSFUL_LOGIN") return { icon: "ok", label: "successful login", color: "#2ed3a5" };
+    if (event.event_type === "API_CALL") return { icon: "<>", label: "api access", color: "#9f8bff" };
+    return { icon: "!", label: event.event_type.toLowerCase(), color: "#ffc86b" };
+}
+
+function renderTimeline() {
+    timelineTrack.innerHTML = "";
+    if (!timelineItems.length) {
+        timelineEmpty.classList.remove("d-none");
+        btnPrev.disabled = true;
+        btnNext.disabled = true;
+        return;
+    }
+    timelineEmpty.classList.add("d-none");
+
+    timelineItems.forEach(event => {
+        const meta = timelineMeta(event);
+        const date = new Date(`${event.created_at}Z`);
+        date.setMinutes(date.getMinutes() + 330);
+        const item = document.createElement("div");
+        item.className = "timeline-item";
+        item.innerHTML = `
+            <div class="timeline-icon" style="color:${meta.color}">${meta.icon}</div>
+            <div style="font-size:0.8rem; margin-bottom:4px;">${meta.label}</div>
+            <div class="timeline-time">${date.toLocaleTimeString("en-IN", {
+                timeZone: "UTC",
+                hour: "numeric",
+                minute: "2-digit",
+                second: "2-digit",
+                hour12: true
+            })}<br>${date.toLocaleDateString("en-IN", {
+                timeZone: "UTC",
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit"
+            })}</div>
+        `;
+        timelineTrack.appendChild(item);
+    });
+    updateTimelineButtons();
+}
+
+function updateTimelineButtons() {
+    const maxScroll = timelineShell.scrollWidth - timelineShell.clientWidth;
+    btnPrev.disabled = timelineShell.scrollLeft <= 2;
+    btnNext.disabled = timelineShell.scrollLeft >= (maxScroll - 2);
+}
+
+btnPrev.addEventListener("click", () => {
+    timelineShell.scrollBy({ left: -SCROLL_STEP, behavior: "smooth" });
+});
+
+btnNext.addEventListener("click", () => {
+    timelineShell.scrollBy({ left: SCROLL_STEP, behavior: "smooth" });
+});
+
+timelineShell.addEventListener("scroll", updateTimelineButtons);
+window.addEventListener("resize", updateTimelineButtons);
+
+resetBtn.addEventListener("click", async () => {
+    const confirmReset = window.confirm("This will delete logs and alerts for this user and reset risk score. Continue?");
+    if (!confirmReset) return;
+    const restore = setButtonLoading(resetBtn, "Resetting...");
+    try {
+        const res = await fetch(`/api/admin/user/${userId}/reset-security`, { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || "Failed to reset user security data.");
+            return;
+        }
+        window.location.reload();
+    } finally {
+        restore();
+    }
+});
 
 fetch(`/api/admin/user/${userId}`)
-.then(r=>r.json())
-.then(data=>{
-    userInfo.innerText = `User: ${data.user.username} (${data.user.email})`;
-    riskScore.innerText = `Risk Score: ${data.risk_score}`;
+.then(r => r.json())
+.then(data => {
+    document.getElementById("userNameLine").innerText = data.user.username;
+    document.getElementById("userEmailLine").innerText = data.user.email;
+    document.getElementById("riskScore").innerText = `Risk Score: ${data.risk_score}`;
 
-    data.recent_alerts.forEach(a=>{
-        const li=document.createElement("li");
-        li.className="list-group-item";
-        li.innerText=`${a.severity} - ${a.message}`;
-        alerts.appendChild(li);
-    });
-
-    data.recent_events.forEach(e=>{
-        const li=document.createElement("li");
-        li.className="list-group-item";
-        li.innerText=`${e.event_type} → ${e.resource}`;
-        events.appendChild(li);
-    });
+    const eventsEl = document.getElementById("events");
+    eventsEl.innerHTML = "";
+    if (!data.recent_events || data.recent_events.length === 0) {
+        const li = document.createElement("li");
+        li.className = "list-group-item";
+        li.style.background = "#23283a";
+        li.style.color = "#b7c0dd";
+        li.innerText = "No recent activity of user";
+        eventsEl.appendChild(li);
+    } else {
+        data.recent_events.forEach(e => {
+            const li = document.createElement("li");
+            li.className = "list-group-item";
+            li.style.background = "#23283a";
+            li.style.color = "#fff";
+            li.style.borderColor = "#343a54";
+            li.innerText = formatActivityText(e);
+            eventsEl.appendChild(li);
+        });
+    }
 });
 
 fetch(`/api/admin/user/${userId}/timeline`)
-.then(r=>r.json())
-.then(events=>{
-    events.forEach(e=>{
-        const li=document.createElement("li");
-        li.className="list-group-item";
-        li.innerText = `${e.event_type} — ${new Date(e.created_at + "Z")
-        .toLocaleString("en-IN",{timeZone:"Asia/Kolkata"})}`;
-        timeline.appendChild(li);
-    });
+.then(r => r.json())
+.then(events => {
+    timelineItems = events || [];
+    renderTimeline();
 });
+
+initTooltips();
 </script>
 
 </body>

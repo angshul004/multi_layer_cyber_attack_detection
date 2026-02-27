@@ -13,7 +13,7 @@ MODEL_PATH = os.path.join(
     "ml_models",
     "phishing_model_optimized.pkl",
 )
-# To switch model replace filename above with "phishing_model.pkl". which was huge size.
+# To switch model replace filename above with "phishing_model.pkl". it was huge so i removed in gitignore.
 
 _MODEL = None
 _PHISHING_THRESHOLD = 0.5

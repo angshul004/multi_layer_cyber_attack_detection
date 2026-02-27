@@ -1,37 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>URL Phishing Scan</title>
+    <title>URL Scan | SentinelX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
 </head>
-<body class="bg-light">
+<body>
 
 {% include "navbar.html" %}
 
-<div class="container mt-5">
-    <div class="card shadow mx-auto p-4" style="max-width: 700px;">
-        <h4 class="mb-3">URL Phishing Detection</h4>
+<main class="container py-5">
+    <div class="panel p-4 mx-auto" style="max-width: 860px;">
+        <h1 class="section-title mb-3">URL Phishing Detection</h1>
 
         <div class="input-group mb-3">
-            <input id="urlInput" type="text" class="form-control" placeholder="Enter URL to scan (e.g., http://example.com)">
-            <button id="scanBtn" class="btn btn-primary">Scan</button>
+            <input id="urlInput" type="text" class="form-control input-dark" placeholder="Paste URL here">
+            <button id="scanBtn" class="btn btn-primary-custom">Scan</button>
         </div>
 
         <div id="errorBox" class="alert alert-danger d-none" role="alert"></div>
 
         <div id="resultBox" class="d-none">
-            <p class="mb-1">
-                Prediction:
-                <span id="predictionBadge" class="badge"></span>
-            </p>
+            <p class="mb-1">Prediction: <span id="predictionBadge" class="badge"></span></p>
             <p class="mb-3">Confidence: <strong id="confidenceText"></strong></p>
-
-            <h6>Extracted Features</h6>
+            <p class="muted mb-3">Normalized URL: <span id="normalizedUrlText"></span></p>
+            <h6 class="section-title">Extracted Features</h6>
             <ul id="featuresList" class="list-group"></ul>
         </div>
     </div>
-</div>
+</main>
 
+<script src="{{ url_for('static', filename='js/ui.js') }}"></script>
 <script>
 const scanBtn = document.getElementById("scanBtn");
 const urlInput = document.getElementById("urlInput");
@@ -39,6 +42,7 @@ const errorBox = document.getElementById("errorBox");
 const resultBox = document.getElementById("resultBox");
 const predictionBadge = document.getElementById("predictionBadge");
 const confidenceText = document.getElementById("confidenceText");
+const normalizedUrlText = document.getElementById("normalizedUrlText");
 const featuresList = document.getElementById("featuresList");
 
 function showError(message) {
@@ -56,6 +60,9 @@ function renderFeatures(features) {
     Object.entries(features).forEach(([key, value]) => {
         const item = document.createElement("li");
         item.className = "list-group-item d-flex justify-content-between";
+        item.style.background = "#23283a";
+        item.style.color = "#fff";
+        item.style.borderColor = "#343a54";
         item.innerHTML = `<span>${key}</span><strong>${value}</strong>`;
         featuresList.appendChild(item);
     });
@@ -71,6 +78,7 @@ scanBtn.addEventListener("click", async () => {
         return;
     }
 
+    const restoreBtn = setButtonLoading(scanBtn, "Scanning...");
     try {
         const res = await fetch("/api/scan-url", {
             method: "POST",
@@ -88,11 +96,14 @@ scanBtn.addEventListener("click", async () => {
         predictionBadge.className = `badge ${isPhishing ? "text-bg-danger" : "text-bg-success"}`;
         predictionBadge.innerText = payload.prediction;
         confidenceText.innerText = `${(payload.confidence * 100).toFixed(2)}%`;
+        normalizedUrlText.innerText = payload.normalized_url || "N/A";
 
         renderFeatures(payload.features || {});
         resultBox.classList.remove("d-none");
     } catch (err) {
         showError("Unexpected error while scanning URL.");
+    } finally {
+        restoreBtn();
     }
 });
 </script>

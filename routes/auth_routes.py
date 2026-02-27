@@ -63,7 +63,7 @@ def login():
     # Case 1: User not found
     if not user:
         event = EventLog(
-            user_id=0,  # unknown user
+            user_id=0,  # unknown user cuz no user with id 0
             event_type="FAILED_LOGIN",
             event_data=json.dumps({
                 "username": data["username"],
@@ -79,7 +79,7 @@ def login():
     # Case 2: Password incorrect
     if not check_password_hash(user.password_hash, data["password"]):
 
-        event = EventLog(
+        event = EventLog(   # log failed_login attempt for existing user
             user_id=user.id,
             event_type="FAILED_LOGIN",
             event_data=json.dumps({
@@ -87,15 +87,15 @@ def login():
                 "time": str(datetime.now(timezone.utc))
             })
         )
-        update_risk_score(user.id, 10)
+        update_risk_score(user.id, 10)          # Increment risk score for failed login
         evaluate_and_create_alert(user.id)
 
         db.session.add(event)
         db.session.commit()
 
         # 🔴 Check for brute-force attack
-        if is_bruteforce_attempt(user.id):
-            alert_event = EventLog(
+        if is_bruteforce_attempt(user.id): 
+            alert_event = EventLog(     # log security_alert for possible brute-force attack
                 user_id=user.id,
                 event_type="SECURITY_ALERT",
                 event_data=json.dumps({
@@ -103,7 +103,7 @@ def login():
                     "time": str(datetime.now(timezone.utc))
                 })
             )
-            update_risk_score(user.id, 30)
+            update_risk_score(user.id, 30)      #increment risk score if failed login>=3 in last 5 min
             evaluate_and_create_alert(user.id)
 
             db.session.add(alert_event)
@@ -113,7 +113,7 @@ def login():
 
 
     # Case 3: Successful login
-    event = EventLog(
+    event = EventLog(   # log successful login attempt
         user_id=user.id,
         event_type="SUCCESSFUL_LOGIN",
         event_data=json.dumps({

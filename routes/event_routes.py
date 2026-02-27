@@ -12,48 +12,6 @@ from services.alert_service import evaluate_and_create_alert
 # Create Blueprint
 event_bp = Blueprint("event_bp", __name__)
 
-@event_bp.route("/log-event", methods=["POST"])
-def log_event():
-    """
-    Logs a security-related event into the database.
-    Expected JSON input:
-    {
-        "user_id": 1,
-        "event_type": "LOGIN_ATTEMPT",
-        "ip": "192.168.1.10"
-    }
-    """
-
-    data = request.get_json()
-
-    # Basic validation
-    if not data or "user_id" not in data or "event_type" not in data:
-        return jsonify({
-            "error": "Invalid input data"
-        }), 400
-
-    try:
-        event = EventLog(
-            user_id=data["user_id"],
-            event_type=data["event_type"],
-            event_data=json.dumps(data)  # store full event payload
-        )
-
-        db.session.add(event)
-        db.session.commit()
-
-        return jsonify({
-            "message": "Event logged successfully"
-        }), 201
-
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({
-            "error": "Failed to log event",
-            "details": str(e)
-        }), 500
-
-
 @event_bp.route("/log-action", methods=["POST"])
 def log_user_action():
     """
@@ -71,9 +29,9 @@ def log_user_action():
     if not data or "user_id" not in data or "action_type" not in data:
         return jsonify({"error": "Invalid action data"}), 400
 
-    event = EventLog(
+    event = EventLog(   
         user_id=data["user_id"],
-        event_type=data["action_type"],
+        event_type=data["action_type"], #logs page access, api call.
         event_data=json.dumps(data)
     )
 
@@ -82,7 +40,7 @@ def log_user_action():
 
     # 🔴 Check for abnormal behavior
     if is_behavior_anomalous(data["user_id"]):
-        update_risk_score(data["user_id"], 20)
+        update_risk_score(data["user_id"], 20)      # Increment risk score if 10+ actions in last 1 min
         evaluate_and_create_alert(data["user_id"])
 
 

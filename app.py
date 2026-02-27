@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import os
 
@@ -32,12 +32,16 @@ app.register_blueprint(phishing_bp, url_prefix="/api")
 
 @app.route("/")
 def home():
+    if "user_id" in session:
+        if session.get("is_admin"):
+            return redirect("/admin/dashboard")
+        return redirect("/dashboard")
     return render_template("home.html")
 
 
 @app.route("/register")
 def register_page():
-    return render_template("register.html")
+    return render_template("home.html")
 
 
 @app.route("/admin/dashboard")

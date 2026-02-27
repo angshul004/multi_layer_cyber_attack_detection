@@ -1,35 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>User Activity</title>
+    <title>Activity Simulation | SentinelX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/theme.css') }}" rel="stylesheet">
 </head>
-<body class="bg-light" data-user-id="{{ user_id }}">
+<body data-user-id="{{ user_id }}">
 
 {% include "navbar.html" %}
 
-<div class="container mt-5">
-    <div class="card shadow mx-auto p-4" style="width: 420px;">
-        <h4 class="text-center mb-3">User Activity Simulation</h4>
+<main class="container py-5">
+    <h1 class="section-title mb-1">Simulate Activity</h1>
+    <p class="text-white fs-5 mb-4">Simulate different user actions</p>
 
-        <button class="btn btn-success w-100 mb-2"
-                onclick="logAction('PAGE_ACCESS', '/dashboard')">
-            Normal Page Access
-        </button>
+    <section class="service-grid-3">
+        <article class="panel service-card">
+            <img class="service-art art-1" src="{{ url_for('static', filename='images/card-placeholder.svg') }}" alt="Normal activity">
+            <p class="muted mb-3">Trigger a normal page access activity event.</p>
+            <button class="btn btn-primary-custom w-100" onclick="logAction('PAGE_ACCESS', '/dashboard')">Normal user activity</button>
+        </article>
 
-        <button class="btn btn-primary w-100 mb-2"
-                onclick="logAction('API_CALL', '/api/data')">
-            Single API Call
-        </button>
+        <article class="panel service-card">
+            <img class="service-art art-2" src="{{ url_for('static', filename='images/card-placeholder.svg') }}" alt="Single API call">
+            <p class="muted mb-3">Log a single API request for behavior baseline.</p>
+            <button class="btn btn-primary-custom w-100" onclick="logAction('API_CALL', '/api/data')">Single API call</button>
+        </article>
 
-        <button class="btn btn-danger w-100"
-                onclick="spamApi()">
-            🚨 Spam API (Simulate Attack)
-        </button>
+        <article class="panel service-card">
+            <img class="service-art art-3" src="{{ url_for('static', filename='images/card-placeholder.svg') }}" alt="Spam API">
+            <p class="muted mb-3">Generate repeated API calls to emulate suspicious traffic.</p>
+            <button class="btn btn-primary-custom w-100" onclick="spamApi()">Spam API</button>
+        </article>
+    </section>
 
-        <p id="msg" class="text-center mt-3"></p>
-    </div>
-</div>
+    <p id="msg" class="mt-4 muted"></p>
+</main>
 
 <script>
 const USER_ID = document.body.dataset.userId;
@@ -37,14 +46,13 @@ const USER_ID = document.body.dataset.userId;
 function logAction(actionType, resource) {
     fetch("/api/log-action", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {"Content-Type": "application/json"},
         body: JSON.stringify({
             user_id: USER_ID,
             action_type: actionType,
             resource: resource
         })
-    })
-    .then(() => {
+    }).then(() => {
         document.getElementById("msg").innerText = "Action logged";
     });
 }
@@ -52,11 +60,10 @@ function logAction(actionType, resource) {
 function spamApi() {
     document.getElementById("msg").innerText = "Spamming API...";
     for (let i = 0; i < 12; i++) {
-        logAction("API_CALL", "/api/data"); //demo resource access
+        logAction("API_CALL", "/api/data");
     }
 }
 </script>
 
 </body>
 </html>
-

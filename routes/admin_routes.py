@@ -3,6 +3,7 @@ from models.alert import Alert
 from models.risk_score import RiskScore
 from models.event_log import EventLog
 from models.user import User
+from extensions import db
 
 import json
 
@@ -69,6 +70,17 @@ def get_user_profile(user_id):
     events = EventLog.query.filter_by(user_id=user_id)\
         .order_by(EventLog.created_at.desc()).limit(10).all()
 
+    recent_events = []
+    for e in events:
+        parsed = json.loads(e.event_data) if e.event_data else {}
+        recent_events.append({
+            "event_type": e.event_type,
+            "resource": parsed.get("resource", "N/A"),
+            "reason": parsed.get("reason", ""),
+            "url": parsed.get("url", ""),
+            "created_at": e.created_at.isoformat()
+        })
+
     return jsonify({
         "user": {
             "id": user.id,
@@ -83,14 +95,7 @@ def get_user_profile(user_id):
                 "created_at": a.created_at.isoformat()
             } for a in alerts
         ],
-        "recent_events": [
-            {
-                "event_type": e.event_type,
-                "resource": json.loads(e.event_data).get("resource", "N/A")
-                            if e.event_data else "N/A",
-                "created_at": e.created_at.isoformat()
-            } for e in events
-        ]
+        "recent_events": recent_events
 
     })
 
@@ -103,9 +108,37 @@ def user_timeline(user_id):
 
     timeline = []
     for e in events:
+        parsed = json.loads(e.event_data) if e.event_data else {}
         timeline.append({
             "event_type": e.event_type,
+            "reason": parsed.get("reason", ""),
+            "resource": parsed.get("resource", ""),
             "created_at": e.created_at.isoformat()
         })
 
     return jsonify(timeline)
+
+
+@admin_bp.route("/user/<int:user_id>/reset-security", methods=["POST"])
+def reset_user_security(user_id):
+    if not admin_required():
+        return jsonify({"error": "Unauthorized"}), 403
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    try:
+        EventLog.query.filter_by(user_id=user_id).delete()
+        Alert.query.filter_by(user_id=user_id).delete()
+
+        risk = RiskScore.query.filter_by(user_id=user_id).first()
+        if risk:
+            risk.score = 0
+            db.session.add(risk)
+
+        db.session.commit()
+        return jsonify({"message": "User alerts/logs cleared and risk score reset"}), 200
+    except Exception as exc:
+        db.session.rollback()
+        return jsonify({"error": "Failed to reset user security data", "details": str(exc)}), 500

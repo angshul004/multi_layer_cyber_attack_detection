@@ -12,7 +12,7 @@ def is_bruteforce_attempt(user_id):
 
     failed_attempts = EventLog.query.filter(
         EventLog.user_id == user_id,
-        EventLog.event_type == "FAILED_LOGIN",
+        EventLog.event_type == "FAILED_LOGIN", # only count failed login attempts
         EventLog.created_at >= five_minutes_ago
     ).count()
 
