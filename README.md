@@ -60,11 +60,13 @@ Windows PowerShell:
 pip install -r requirements.txt
 ```
 
-4. Configure database connection in `config.py`:
-```python
-class Config:
-    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:password@localhost/cyber_security_db"
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+4. Create a `.env` file (or copy from `.env.example`) and set:
+```env
+SECRET_KEY=replace_with_a_strong_random_secret_key
+DB_USER=your_mysql_user
+DB_PASSWORD=your_mysql_password
+DB_HOST=localhost
+DB_NAME=cyber_security_db
 ```
 
 5. Create database (if not already created):
@@ -104,6 +106,13 @@ Confusion matrix:
 python app.py
 ```
 
+Default local URL:
+- `http://127.0.0.1:5000/`
+
+Route behavior note:
+- If a user is already logged in, opening `/` redirects to their dashboard.
+- `/register` currently renders the same page as `/` (shared registration UI).
+
 ## Main Routes
 Page routes:
 - `/` Home
@@ -118,10 +127,12 @@ API routes:
 - `POST /api/register`
 - `POST /api/login`
 - `POST /api/log-action`
-- `POST /api/log-event`
 - `POST /api/scan-url` 
 - `GET /api/admin/alerts`
 - `GET /api/admin/users`
+- `GET /api/admin/user/<id>`
+- `GET /api/admin/user/<id>/timeline`
+- `POST /api/admin/user/<id>/reset-security`
 
 ## URL Scan API Example
 Request:
@@ -147,6 +158,4 @@ Response shape:
 ```
 
 ## Author
-Angshul 
-## Contribution
-Arkarup
+Angshul Arkarup
