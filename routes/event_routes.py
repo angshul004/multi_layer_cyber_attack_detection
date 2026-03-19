@@ -41,7 +41,7 @@ def log_user_action():
     # 🔴 Check for abnormal behavior
     if is_behavior_anomalous(data["user_id"]):
         update_risk_score(data["user_id"], 20)      # Increment risk score if 10+ actions in last 1 min
-        evaluate_and_create_alert(data["user_id"])
+        evaluate_and_create_alert(data["user_id"], "behavior anomaly")
 
 
     return jsonify({"message": "User action logged"}), 201

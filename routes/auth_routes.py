@@ -88,7 +88,7 @@ def login():
             })
         )
         update_risk_score(user.id, 10)          # Increment risk score for failed login
-        evaluate_and_create_alert(user.id)
+        evaluate_and_create_alert(user.id, "failed logins")
 
         db.session.add(event)
         db.session.commit()
@@ -104,7 +104,7 @@ def login():
                 })
             )
             update_risk_score(user.id, 30)      #increment risk score if failed login>=3 in last 5 min
-            evaluate_and_create_alert(user.id)
+            evaluate_and_create_alert(user.id, "brute-force detection")
 
             db.session.add(alert_event)
             db.session.commit()

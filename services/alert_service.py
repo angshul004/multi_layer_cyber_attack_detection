@@ -1,14 +1,20 @@
+from datetime import datetime, timezone
+
+from extensions import db
 from models.alert import Alert
 from models.risk_score import RiskScore
-from extensions import db
-from datetime import datetime, timedelta, timezone
-
 from services.correlation_service import detect_correlated_attack
 
 
-def evaluate_and_create_alert(user_id):
-    risk = RiskScore.query.filter_by(user_id=user_id).first()
+def _append_message(existing_message, new_message):
+    messages = [part.strip() for part in (existing_message or "").split(",") if part.strip()]
+    if new_message not in messages:
+        messages.append(new_message)
+    return ", ".join(messages)
 
+
+def evaluate_and_create_alert(user_id, trigger_message):
+    risk = RiskScore.query.filter_by(user_id=user_id).first()
     if not risk:
         return
 
@@ -19,25 +25,20 @@ def evaluate_and_create_alert(user_id):
     else:
         severity = "HIGH"
 
-    # 🔴 Avoid duplicate alerts within 10 minutes
-    ten_minutes_ago = datetime.now(timezone.utc) - timedelta(minutes=10)
-    recent_alert = Alert.query.filter(
-        Alert.user_id == user_id,
-        Alert.severity == severity,
-        Alert.created_at >= ten_minutes_ago
-    ).first()
+    alert = Alert.query.filter_by(user_id=user_id).first()
 
-    if recent_alert:
-        return
-
-    alert = Alert(
-        user_id=user_id,
-        severity=severity,
-        message="User risk score crossed threshold"
-    )
+    if alert is None:
+        alert = Alert(
+            user_id=user_id,
+            severity=severity,
+            message=trigger_message,
+            created_at=datetime.now(timezone.utc),
+        )
+    else:
+        alert.severity = severity
+        alert.message = _append_message(alert.message, trigger_message)
+        alert.created_at = datetime.now(timezone.utc)
 
     db.session.add(alert)
     db.session.commit()
-
     detect_correlated_attack(user_id)
-
