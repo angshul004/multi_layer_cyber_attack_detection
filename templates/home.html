@@ -37,16 +37,26 @@
 
 <script>
 function register() {
+  const cleanUsername = username.value.trim();
+  const cleanEmail = email.value.trim();
+  const cleanPassword = password.value.trim();
+  const m = document.getElementById("msg");
+
+  if (!cleanUsername || !cleanEmail || !cleanPassword) {
+    m.style.color = "#ff8a9c";
+    m.innerText = "Username, email, and password cannot be blank.";
+    return;
+  }
+
   fetch("/api/register", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
-      username: username.value,
-      email: email.value,
-      password: password.value
+      username: cleanUsername,
+      email: cleanEmail,
+      password: cleanPassword
     })
   }).then(r => r.json()).then(d => {
-    const m = document.getElementById("msg");
     if (d.message) {
       m.style.color = "#2ed3a5";
       m.innerText = d.message + " Please log in.";

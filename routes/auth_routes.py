@@ -26,21 +26,28 @@ def register():
     if not data or "username" not in data or "email" not in data or "password" not in data:
         return jsonify({"error": "Missing required fields"}), 400
 
+    username = (data.get("username") or "").strip()
+    email = (data.get("email") or "").strip()
+    password = (data.get("password") or "").strip()
+
+    if not username or not email or not password:
+        return jsonify({"error": "Username, email, and password cannot be blank"}), 400
+
     # Check if user already exists
     existing_user = User.query.filter(
-        (User.username == data["username"]) | (User.email == data["email"])
+        (User.username == username) | (User.email == email)
     ).first()
 
     if existing_user:
         return jsonify({"error": "User already exists"}), 409
 
     # Hash password
-    hashed_password = generate_password_hash(data["password"])
+    hashed_password = generate_password_hash(password)
 
     # Create user
     user = User(
-        username=data["username"],
-        email=data["email"],
+        username=username,
+        email=email,
         password_hash=hashed_password
     )
 
@@ -58,7 +65,13 @@ def login():
     if not data or "username" not in data or "password" not in data:
         return jsonify({"error": "Missing credentials"}), 400
 
-    user = User.query.filter_by(username=data["username"]).first()
+    username = (data.get("username") or "").strip()
+    password = (data.get("password") or "").strip()
+
+    if not username or not password:
+        return jsonify({"error": "Username and password cannot be blank"}), 400
+
+    user = User.query.filter_by(username=username).first()
 
     # Case 1: User not found
     if not user:
@@ -66,7 +79,7 @@ def login():
             user_id=0,  # unknown user cuz no user with id 0
             event_type="FAILED_LOGIN",
             event_data=json.dumps({
-                "username": data["username"],
+                "username": username,
                 "reason": "user_not_found",
                 "time": str(datetime.now(timezone.utc))
             })
@@ -77,7 +90,7 @@ def login():
         return jsonify({"error": "Invalid username or password"}), 401
 
     # Case 2: Password incorrect
-    if not check_password_hash(user.password_hash, data["password"]):
+    if not check_password_hash(user.password_hash, password):
 
         event = EventLog(   # log failed_login attempt for existing user
             user_id=user.id,
