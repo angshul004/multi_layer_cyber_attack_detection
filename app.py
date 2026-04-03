@@ -9,6 +9,7 @@ from flask import Flask, redirect, render_template, session
 
 from config import Config
 from extensions import db
+from models import Alert, EventLog, RiskScore, User
 from routes.admin_routes import admin_bp
 from routes.auth_routes import auth_bp
 from routes.event_routes import event_bp
@@ -25,6 +26,9 @@ if not secret_key:
 app.secret_key = secret_key
 
 db.init_app(app)
+
+with app.app_context():
+    db.create_all()
 
 app.register_blueprint(event_bp, url_prefix="/api")
 app.register_blueprint(auth_bp, url_prefix="/api")

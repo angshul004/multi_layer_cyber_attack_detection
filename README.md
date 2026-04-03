@@ -78,10 +78,7 @@ DB_NAME=cyber_security_db
 CREATE DATABASE cyber_security_db;
 ```
 
-6. Create tables:
-```bash
-python -c "from app import app; from extensions import db; app.app_context().push(); db.create_all(); print('tables created')"
-```
+6. Tables are created automatically on app startup if they do not already exist.
 
 ## Train Phishing Model (Optimized)
 This project is configured to use the optimized model file by default.
