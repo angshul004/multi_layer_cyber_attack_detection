@@ -4,3 +4,4 @@ pymysql
 scikit-learn
 python-dotenv
 gunicorn
+cryptography
