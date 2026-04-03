@@ -18,8 +18,8 @@ class Config:
     DB_PORT = os.getenv("DB_PORT") or os.getenv("MYSQLPORT") or "3306"
     DB_NAME = os.getenv("DB_NAME") or os.getenv("MYSQLDATABASE") or "cyber_security_db"
     RAILWAY_MYSQL_URL = _normalize_mysql_uri(os.getenv("MYSQL_URL"))
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "SQLALCHEMY_DATABASE_URI",
-        RAILWAY_MYSQL_URL or f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}",
+    DIRECT_DATABASE_URI = _normalize_mysql_uri(os.getenv("SQLALCHEMY_DATABASE_URI"))
+    SQLALCHEMY_DATABASE_URI = DIRECT_DATABASE_URI or (
+        RAILWAY_MYSQL_URL or f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
